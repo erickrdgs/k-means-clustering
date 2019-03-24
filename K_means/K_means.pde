@@ -1,7 +1,8 @@
 int numCentroids = 6;
+int clicks       = 0;
 
 ArrayList centroids, particles;
-Table table;
+Table     table;
 
 void setup() 
 {  
@@ -48,10 +49,18 @@ void draw()
 }
 
 void mouseClicked()
-{  
+{ 
+  clicks++;
+  println(clicks + "° interation");
+      
   for (int i = 0; i < centroids.size(); i++) {
     Centroid c = (Centroid) centroids.get(i);
     c.Tick(particles);
+    
+    println("X: " + c.components.x +
+            " Y: " + c.components.y +
+            " T: " + c.components.z +
+            " N° Particles: " + c.numParticles);
   }
 }
 

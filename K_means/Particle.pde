@@ -36,8 +36,8 @@ class Particle
   
   void DrawParticle()
   {
-    noStroke();
     fill(R, G, B);
-    circle(components.x, components.y, 5);
+   
+    ellipse(components.x, components.y, 5, 5);
   }
 }

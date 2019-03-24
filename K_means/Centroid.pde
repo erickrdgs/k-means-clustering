@@ -3,6 +3,7 @@ class Centroid
   PVector components;
   float R, G, B;
   int internalIndex;
+  int numParticles;
   
   Centroid (PVector components, int index, float r, float g, float b)
   {
@@ -11,14 +12,14 @@ class Centroid
     
     R = r;
     G = g;
-    B = b;    
+    B = b;        
   }
   
   void Tick(ArrayList particles)
   {
-    PVector newComponents = new PVector(0.0, 0.0, 0.0);
+    PVector newComponents = new PVector();
 
-    float numParticles = 0;
+    numParticles = 0;
 
     for (int i = 0; i < particles.size(); i++)
     {
@@ -35,13 +36,14 @@ class Centroid
     {
       newComponents.div(numParticles);
       components = newComponents;
-    }
+    }    
   }
   
   void DrawCentroid()
   {
-    noStroke();
     fill(R, G, B);
-    circle(components.x, components.y, 15);
+    
+    float radius = 10 + numParticles/2;
+    ellipse(components.x, components.y, radius, radius);
   }
 }
