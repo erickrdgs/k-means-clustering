@@ -1,66 +1,42 @@
-int numCentroids = 6;
-int clicks       = 0;
+import java.util.Collections;
 
-ArrayList centroids, particles;
-Table     table;
+// ----------- VARIABLES ----------- //
+float numCentroids = 6;
 
+ArrayList<Centroid> oldCentroids = new ArrayList<Centroid>();
+ArrayList<Centroid> centroids    = new ArrayList<Centroid>();
+ArrayList<Particle> particles    = new ArrayList<Particle>();
+
+Table table;
+PFont f;
+
+int     counter;
+boolean isDrawn;
+
+// ------------ METHODS ------------ //
 void setup() 
-{  
+{    
+  isDrawn = false;
+  f       = createFont("Verdana", 12, true);    
+  table   = loadTable("Data/Task.csv", "header");
+          
+  textFont(f);
   fullScreen();
+  background(0);
+  textAlign(CENTER);
   
-  table = loadTable("Data/Task.csv", "header");
-  
-  particles = new ArrayList();
-  centroids = new ArrayList();
-
-  for(TableRow row: table.rows())
-  {
-    PVector components = new PVector(row.getFloat("x0"), row.getFloat("x1"), row.getFloat("x2"));  
-    particles.add(new Particle(components));
-  }
-    
-  PVector max = MaxAllowed();
-  
-  for(int i = 0; i < numCentroids; i++)
-  {
-    PVector components = new PVector(random(max.x), random(max.y), random(max.z));    
-    centroids.add(new Centroid(components, i, random(255), random(255), random(255)));
-  }  
+  CreateParticles();
+  CreateCentroids();
 }
 
 void draw()
-{
-  background(0); 
-  
-  for (int i = 0; i < particles.size(); i++) {
-    Particle p = (Particle) particles.get(i);
-    p.FindClosestCentroid(centroids);
-  }    
-    
-  for (int i = 0; i < particles.size(); i++) {
-    Particle p = (Particle) particles.get(i);
-    p.DrawParticle();
-  }
-  
-  for (int i = 0; i < centroids.size(); i++) {
-    Centroid c = (Centroid) centroids.get(i);
-    c.DrawCentroid();
-  }  
-}
-
-void mouseClicked()
 { 
-  clicks++;
-  println(clicks + "° interation");
-      
-  for (int i = 0; i < centroids.size(); i++) {
-    Centroid c = (Centroid) centroids.get(i);
-    c.Tick(particles);
-    
-    println("X: " + c.components.x +
-            " Y: " + c.components.y +
-            " T: " + c.components.z +
-            " N° Particles: " + c.numParticles);
+  if(!isDrawn)
+  {
+    if(Equals(oldCentroids, centroids))
+      DrawEverything();
+    else
+      TickSim();
   }
 }
 
@@ -76,4 +52,93 @@ PVector MaxAllowed()
   }
   
   return max;
+}
+
+boolean Equals(ArrayList<Centroid> otherCentroids, ArrayList<Centroid> centroids)
+{
+  if(otherCentroids.size() != centroids.size()) return false;
+  
+  for(int i = 0; i < centroids.size(); i++)
+  {
+    if(otherCentroids.get(i).components.x != centroids.get(i).components.x ||
+       otherCentroids.get(i).components.y != centroids.get(i).components.y ||
+       otherCentroids.get(i).components.z != centroids.get(i).components.z)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+void CopyCentroids(ArrayList<Centroid> otherCentroids, ArrayList<Centroid> centroids)
+{  
+  otherCentroids.clear();
+  
+  for(Centroid c: centroids)
+    otherCentroids.add(c.Copy());
+}
+
+void TickSim()
+{
+  CopyCentroids(oldCentroids, centroids);
+  
+  for (int i = 0; i < particles.size(); i++)
+    particles.get(i).FindClosestCentroid(centroids); 
+  
+  for (int i = 0; i < centroids.size(); i++)
+    centroids.get(i).Tick(particles);
+    
+  counter++;
+  println(counter + "° iteration");
+}
+
+void DrawEverything()
+{  
+  Collections.sort(centroids);
+  Collections.sort(oldCentroids);
+      
+  for (int i = 0; i < particles.size(); i++)    
+    particles.get(i).DrawParticle();
+  
+  for (int i = 0; i < centroids.size(); i++)
+  {
+    centroids.get(i).DrawCentroid();
+    DrawLines(centroids, i);
+  }
+  
+  isDrawn = true;
+}
+
+void DrawLines(ArrayList<Centroid> centroids, int i)
+{
+  fill(255);
+  text(i, centroids.get(i).components.x, centroids.get(i).components.y);
+    
+  if(i < centroids.size() - 1)
+  {
+    stroke(255);
+    line(centroids.get(i).components.x, centroids.get(i).components.y,
+         centroids.get(i+1).components.x, centroids.get(i+1).components.y); 
+  }
+}
+
+void CreateParticles()
+{  
+  for(TableRow row: table.rows())
+  {
+    PVector components = new PVector(row.getFloat("x0"), row.getFloat("x1"), row.getFloat("x2"));  
+    particles.add(new Particle(components));
+  }
+}
+
+void CreateCentroids()
+{
+  PVector max = MaxAllowed();
+  
+  for(int i = 0; i < numCentroids; i++)
+  {
+    PVector components = new PVector(random(max.x), random(max.y), random(max.z));    
+    centroids.add(new Centroid(components, i, random(255), random(255), random(255)));
+  }  
+
 }
