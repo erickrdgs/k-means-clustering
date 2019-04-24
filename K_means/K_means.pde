@@ -1,7 +1,8 @@
 import java.util.Collections;
 
 // ----------- VARIABLES ----------- //
-float numCentroids = 6;
+int numCentroids = 6;
+float  threshold = 0.1;
 
 ArrayList<Centroid> oldCentroids = new ArrayList<Centroid>();
 ArrayList<Centroid> centroids    = new ArrayList<Centroid>();
@@ -13,12 +14,11 @@ PFont f;
 int     counter;
 boolean isDrawn;
 
-// ------------ METHODS ------------ //
+// ------------ VOID METHODS ------------ //
 void setup() 
 {    
-  isDrawn = false;
-  f       = createFont("Verdana", 12, true);    
-  table   = loadTable("Data/Task.csv", "header");
+  f     = createFont("Verdana", 12, true);    
+  table = loadTable("Data/Task.csv", "header");
           
   textFont(f);
   fullScreen();
@@ -38,36 +38,6 @@ void draw()
     else
       TickSim();
   }
-}
-
-PVector MaxAllowed()
-{
-  PVector max = new PVector();
-  
-  for(TableRow row: table.rows())
-  {
-    if(row.getFloat("x0") > max.x) max.x = row.getFloat("x0");
-    if(row.getFloat("x1") > max.y) max.y = row.getFloat("x1");
-    if(row.getFloat("x2") > max.z) max.z = row.getFloat("x2");
-  }
-  
-  return max;
-}
-
-boolean Equals(ArrayList<Centroid> otherCentroids, ArrayList<Centroid> centroids)
-{
-  if(otherCentroids.size() != centroids.size()) return false;
-  
-  for(int i = 0; i < centroids.size(); i++)
-  {
-    if(otherCentroids.get(i).components.x != centroids.get(i).components.x ||
-       otherCentroids.get(i).components.y != centroids.get(i).components.y ||
-       otherCentroids.get(i).components.z != centroids.get(i).components.z)
-    {
-      return false;
-    }
-  }
-  return true;
 }
 
 void CopyCentroids(ArrayList<Centroid> otherCentroids, ArrayList<Centroid> centroids)
@@ -132,13 +102,29 @@ void CreateParticles()
 }
 
 void CreateCentroids()
-{
-  PVector max = MaxAllowed();
-  
+{  
+  randomSeed(0);
   for(int i = 0; i < numCentroids; i++)
   {
-    PVector components = new PVector(random(max.x), random(max.y), random(max.z));    
-    centroids.add(new Centroid(components, i, random(255), random(255), random(255)));
+    int index = (int) random(0, particles.size()); 
+    centroids.add(new Centroid(particles.get(index).components, i, random(255), random(255), random(255)));
   }  
+}
 
+// ------------ NOT SO VOID METHODS ------------ //
+
+boolean Equals(ArrayList<Centroid> otherCentroids, ArrayList<Centroid> centroids)
+{
+  if(otherCentroids.size() != centroids.size()) return false;
+  
+  for(int i = 0; i < centroids.size(); i++)
+  {
+    if(abs(otherCentroids.get(i).components.x - centroids.get(i).components.x) > threshold ||
+       abs(otherCentroids.get(i).components.y - centroids.get(i).components.y) > threshold ||
+       abs(otherCentroids.get(i).components.z - centroids.get(i).components.z) > threshold)
+    {
+      return false;
+    }
+  }
+  return true;
 }
