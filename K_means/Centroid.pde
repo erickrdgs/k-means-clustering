@@ -41,7 +41,7 @@ class Centroid implements Comparable<Centroid>
   
   void DrawCentroid()
   {
-    fill(R, G, B, 128);
+    fill(R, G, B);
     noStroke();
     
     float radius = 10 + numParticles/2;
