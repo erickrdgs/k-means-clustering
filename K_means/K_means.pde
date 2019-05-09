@@ -1,139 +1,134 @@
 import java.util.Collections;
 
-// ----------- VARIABLES ----------- //
-int numCentroids = 4;
-float  threshold = 0.1;
+class Kmeans
+{
+  // ----------- VARIABLES ----------- //
+  int numCentroids;
+  float  threshold;
 
-ArrayList<Centroid> oldCentroids = new ArrayList<Centroid>();
-ArrayList<Centroid> centroids    = new ArrayList<Centroid>();
-ArrayList<Particle> particles    = new ArrayList<Particle>();
+  ArrayList<Centroid> oldCentroids, centroids;
+  ArrayList particles;
 
-Table table;
-PFont f;
+  PFont f;
 
-int     counter;
-boolean isDrawn;
-
-// ------------ VOID METHODS ------------ //
-void setup() 
-{    
-  f     = createFont("Verdana", 12, true);    
-  table = loadTable("Data/Task.csv", "header");
-
-  textFont(f);
-  fullScreen();
-  background(0);
-  textAlign(CENTER, CENTER);
-
-  CreateParticles();
-  CreateCentroids();
-}
-
-void draw()
-{ 
-  if (!isDrawn)
+  boolean isDrawn;
+  boolean isVisible = true;
+  
+  // ------------ CONSTRUCTOR ------------ //
+  Kmeans(int numCentroids, float threshold, ArrayList particles, String font, int fontSize)
   {
+    this.numCentroids = numCentroids;
+    this.threshold = threshold;
+    this.particles = particles;
+    
+    CreateCentroids(numCentroids);
+    
+    f = createFont(font, fontSize, true);
+    textFont(f);
+    
+  }
+  
+  // ------------ VOID METHODS ------------ //  
+  void Draw()
+  {    
     if (Equals(oldCentroids, centroids))
       DrawEverything();
     else
       TickSim();
   }
-}
-
-void CopyCentroids(ArrayList<Centroid> otherCentroids, ArrayList<Centroid> centroids)
-{  
-  otherCentroids.clear();
-
-  for (Centroid c : centroids)
-    otherCentroids.add(c.Copy());
-}
-
-void TickSim()
-{
-  CopyCentroids(oldCentroids, centroids);
-
-  for (int i = 0; i < particles.size(); i++)
-    particles.get(i).FindClosestCentroid(centroids); 
-
-  for (int i = 0; i < centroids.size(); i++)
-    centroids.get(i).Tick(particles);
-
-  counter++;
-  println(counter + "° iteration");
-}
-
-void DrawEverything()
-{  
-  Collections.sort(centroids);
-  Collections.sort(oldCentroids);
-
-  for (int i = 0; i < centroids.size(); i++)
+  
+  void SetActive(boolean isVisible)
   {
-    DrawLines(centroids, i);    
-    centroids.get(i).DrawCentroid();
-    DrawText(i);
+    this.isVisible = isVisible;
   }
-  isDrawn = true;
-}
-
-void DrawLines(ArrayList<Centroid> centroids, int i)
-{
-  if (i < centroids.size() - 1)
-  {
-    stroke(255);
-    line(centroids.get(i).components.x, centroids.get(i).components.y, 
-      centroids.get(i+1).components.x, centroids.get(i+1).components.y);
-  }
-}
-
-void DrawText(int i) 
-{
-  fill(255);
-  text(i, centroids.get(i).components.x, centroids.get(i).components.y);
-}
-
-void CreateParticles()
-{  
-  for (TableRow row : table.rows())
-  {
-    PVector components = new PVector(row.getFloat("x0"), row.getFloat("x1"), row.getFloat("x2"));  
-    particles.add(new Particle(components));
-  }
-}
-
-void CreateCentroids()
-{  
-  randomSeed(0);
-  for (int i = 0; i < numCentroids; i++)
-  {
-    int index = (int) random(0, particles.size()); 
-    centroids.add(new Centroid(particles.get(index).components, i, random(255), random(255), random(255)));
-  }
-}
-
-// ------------ NOT SO VOID METHODS ------------ //
-
-boolean Equals(ArrayList<Centroid> otherCentroids, ArrayList<Centroid> centroids)
-{
-  if (otherCentroids.size() != centroids.size()) return false;
-
-  for (int i = 0; i < centroids.size(); i++)
-  {
-    if (abs(otherCentroids.get(i).components.x - centroids.get(i).components.x) > threshold ||
-      abs(otherCentroids.get(i).components.y - centroids.get(i).components.y) > threshold ||
-      abs(otherCentroids.get(i).components.z - centroids.get(i).components.z) > threshold)
+    
+  private void CreateCentroids(int n)
+  {  
+    randomSeed(0);
+    
+    for (int i = 0; i < n; i++)
     {
-      return false;
+      int index  = (int) random(0, particles.size());      
+      Particle p = (Particle) particles.get(index);
+            
+      centroids.add(new Centroid(p.components, i, random(255), random(255), random(255)));
     }
   }
-  return true;
-}
-
-void keyPressed()
-{
-  if(key == 'p')
+  
+  private void CopyCentroids(ArrayList<Centroid> oldCentroids, ArrayList<Centroid> centroids)
+  {  
+    oldCentroids.clear();
+    for (Centroid c : centroids) oldCentroids.add(c.Copy());
+  }
+  
+  private void TickSim()
   {
-    for (int i = 0; i < particles.size(); i++)    
-      particles.get(i).DrawParticle();
+    CopyCentroids(oldCentroids, centroids);
+
+    for (int i = 0; i < particles.size(); i++)
+    {
+      Particle p = (Particle) particles.get(i);
+      p.FindClosestCentroid(centroids); 
+    }      
+
+    for (int i = 0; i < centroids.size(); i++)
+      centroids.get(i).Tick(particles);
+  }
+  
+  private void DrawEverything()
+  {  
+    Collections.sort(centroids);
+    Collections.sort(oldCentroids);
+  
+    for (int i = 0; i < centroids.size(); i++)
+    {
+      DrawLines(i);    
+      centroids.get(i).DrawCentroid();
+      DrawText(i);
+    }
+    
+    if(isVisible) 
+    {
+      for (int i = 0; i < particles.size(); i++) 
+      {
+        Particle p = (Particle) particles.get(i); 
+        p.DrawParticle();   
+      } 
+    } 
+    
+    isDrawn = true;
+  }
+  
+  void DrawLines(int i)
+  {
+    if (i < centroids.size() - 1)
+    {
+      stroke(255);
+      line(centroids.get(i).components.x, centroids.get(i).components.y, 
+        centroids.get(i+1).components.x, centroids.get(i+1).components.y);
+    }
+  }
+  
+  void DrawText(int i) 
+  {
+    fill(255);
+    text(i, centroids.get(i).components.x, centroids.get(i).components.y);
+  }
+  
+  // ------------ NOT SO VOID METHODS ------------ //  
+  private boolean Equals(ArrayList<Centroid> otherCentroids, ArrayList<Centroid> centroids)
+  {
+    if (otherCentroids.size() != centroids.size()) return false;
+  
+    for (int i = 0; i < centroids.size(); i++)
+    {
+      if (abs(otherCentroids.get(i).components.x - centroids.get(i).components.x) > threshold ||
+        abs(otherCentroids.get(i).components.y - centroids.get(i).components.y) > threshold ||
+        abs(otherCentroids.get(i).components.z - centroids.get(i).components.z) > threshold)
+      {
+        return false;
+      }
+    }
+    return true;
   }
 }
